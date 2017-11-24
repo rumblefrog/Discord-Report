@@ -1,7 +1,7 @@
 #pragma semicolon 1
 
 #define PLUGIN_AUTHOR "Fishy"
-#define PLUGIN_VERSION "0.00"
+#define PLUGIN_VERSION "0.0.1"
 
 #include <sourcemod>
 #include <smjansson>

@@ -18,7 +18,9 @@ before_script:
     - wget $SMPACKAGE
     - tar -xzf $(basename "$SMPACKAGE")
     - cp Discord_Report.sp addons/sourcemod/scripting/
+    - cp include/smjansson.inc addons/sourcemod/scripting/include
     - cp include/SteamWorks.inc addons/sourcemod/scripting/include
+    - cp include/morecolors.inc addons/sourcemod/scripting/include
     - cd addons/sourcemod/scripting/
     - chmod +x spcomp
     - chmod +x compile.sh

@@ -33,7 +33,7 @@ public void OnPluginStart()
 {
 	CreateConVar("sm_discord_report_version", PLUGIN_VERSION, "Discord Report Version", FCVAR_REPLICATED | FCVAR_SPONLY | FCVAR_DONTRECORD | FCVAR_NOTIFY);
 	
-	CreateConVar("sm_discord_report_hook", "", "Discord Hook URL", FCVAR_PROTECTED);
+	cHook = CreateConVar("sm_discord_report_hook", "", "Discord Hook URL", FCVAR_PROTECTED);
 	
 	RegConsoleCmd("sm_report", CmdReport, "Report to admin");
 	
@@ -54,12 +54,18 @@ public void OnConVarChanged(ConVar convar, const char[] oldValue, const char[] n
 
 public Action CmdReport(int iClient, int iArgs)
 {
+	if (StrEqual(sHook, "", false))
+	{
+		CPrintToChat(iClient, "{lightseagreen}[Report] {grey}Please contact server staff to setup this plugin");
+		return Plugin_Handled;
+	}
+	
 	if (!IsValidClient(iClient))
 		return Plugin_Handled;
 		
 	if (OnCoolDown(iClient))
 	{
-		CPrintToChat(iClient, "{lightseagreen}[Report] {gray}Please wait %.0f seconds before sending another", GetRemaining(iClient));
+		CPrintToChat(iClient, "{lightseagreen}[Report] {grey}Please wait %.0f seconds before sending another", GetRemaining(iClient));
 		return Plugin_Handled;
 	}
 		
@@ -98,7 +104,7 @@ public int Report_Handler(Menu menu, MenuAction action, int iClient, int iItem)
 		bInReason[iClient] = true;
 		iCache[iClient] = iTarget;
 		
-		CPrintToChat(iClient, "{lightseagreen}[Report] {gray}Please type a reason or \"nvm\" to cancel");
+		CPrintToChat(iClient, "{lightseagreen}[Report] {grey}Please type a reason or \"nvm\" to cancel");
 	}
 }
 

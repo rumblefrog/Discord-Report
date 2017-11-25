@@ -1,5 +1,7 @@
 #pragma semicolon 1
 
+#define DEBUG
+
 #define PLUGIN_AUTHOR "Fishy"
 #define PLUGIN_VERSION "0.0.1"
 
@@ -79,7 +81,7 @@ public Action CmdReport(int iClient, int iArgs)
 		if (!IsValidClient(i))
 			continue;
 			
-		Format(sBuffer, sizeof sBuffer, "%d - %N", i + 1, i);
+		Format(sBuffer, sizeof sBuffer, "%N", i);
 		IntToString(i, sIndex, sizeof sIndex);
 			
 		mReport.AddItem(sIndex, sBuffer);
@@ -120,6 +122,8 @@ public Action OnClientSayCommand(int iClient, const char[] sCommand, const char[
 		
 		if (!StrEqual(sArgs, "nvm", false))
 			SendReport(iClient, iCache[iClient], sArgs);
+		else
+			CPrintToChat(iClient, "{lightseagreen}[Report] {grey}Report cancelled");
 			
 		ResetInReason(iClient);
 			
@@ -178,30 +182,34 @@ void SendReport(int iClient, int iTarget, const char[] sReason)
 	json_object_set_new(jFieldTarget, "inline", json_boolean(true));
 	
 	Handle jFieldReason = json_object();
-	json_object_set_new(jFieldTarget, "name", json_string("Reason"));
-	json_object_set_new(jFieldTarget, "value", json_string(sReason));
+	json_object_set_new(jFieldReason, "name", json_string("Reason"));
+	json_object_set_new(jFieldReason, "value", json_string(sReason));
 	
-	json_array_set_new(jFields, 0, jFieldAuthor);
-	json_array_set_new(jFields, 1, jFieldTarget);
-	json_array_set_new(jFields, 2, jFieldReason);
+	json_array_append_new(jFields, jFieldAuthor);
+	json_array_append_new(jFields, jFieldTarget);
+	json_array_append_new(jFields, jFieldReason);
 	
 	
 	json_object_set_new(jContent, "fields", jFields);
 	
 	
 	
-	json_array_set_new(jEmbeds, 0, jContent);
+	json_array_append_new(jEmbeds, jContent);
 	json_object_set_new(jRequest, "embeds", jEmbeds);
 	
 	
 	
-	json_dump(jRequest, sJson, sizeof sJson, 0, false, false, true);	
+	json_dump(jRequest, sJson, sizeof sJson, 0, false, false, true);
+	
+	#if defined DEBUG
+		PrintToServer(sJson);
+	#endif
 	
 	CloseHandle(jRequest);
 	
 	Handle hRequest = SteamWorks_CreateHTTPRequest(k_EHTTPMethodPOST, sHook);
 	SteamWorks_SetHTTPRequestContextValue(hRequest, iClient, iTarget);
-	SteamWorks_SetHTTPRequestRawPostBody(hRequest, "application/json; charset=UTF-8", sJson, sizeof sJson);
+	SteamWorks_SetHTTPRequestGetOrPostParameter(hRequest, "payload_json", sJson);
 	SteamWorks_SetHTTPCallbacks(hRequest, OnHTTPRequestComplete);
 	
 	if (!SteamWorks_SendHTTPRequest(hRequest))
@@ -213,10 +221,26 @@ void SendReport(int iClient, int iTarget, const char[] sReason)
 
 public int OnHTTPRequestComplete(Handle hRequest, bool bFailure, bool bRequestSuccessful, EHTTPStatusCode eStatusCode, int iClient, int iTarget)
 {
-	if (bRequestSuccessful && eStatusCode == k_EHTTPStatusCode200OK)
+	if (bRequestSuccessful && eStatusCode == k_EHTTPStatusCode204NoContent)
 		CPrintToChat(iClient, "{lightseagreen}[Report] {grey}Successfully sent a report against %N", iTarget);
 	else
+	{
 		CPrintToChat(iClient, "{lightseagreen}[Report] {grey}Failed to send a report against %N, please try again later", iTarget);
+		LogError("HTTP request failed for %N against %N", iClient, iTarget);
+		
+		#if defined DEBUG
+			int iSize;
+		
+			SteamWorks_GetHTTPResponseBodySize(hRequest, iSize);
+			
+			char[] sBody = new char[iSize];
+		
+			SteamWorks_GetHTTPResponseBodyData(hRequest, sBody, iSize);
+			
+			PrintToServer(sBody);
+			PrintToServer("%d", eStatusCode);
+		#endif
+	}
 	
 	CloseHandle(hRequest);
 }

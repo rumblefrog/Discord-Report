@@ -1,7 +1,7 @@
 #pragma semicolon 1
 
 #define PLUGIN_AUTHOR "Fishy"
-#define PLUGIN_VERSION "1.0.1"
+#define PLUGIN_VERSION "1.0.2"
 
 #include <sourcemod>
 #include <smjansson>
@@ -104,7 +104,7 @@ public int Report_Handler(Menu menu, MenuAction action, int iClient, int iItem)
 		bInReason[iClient] = true;
 		iCache[iClient] = iTarget;
 		
-		CPrintToChat(iClient, "{lightseagreen}[Report] {grey}Please type a reason or \"nvm\" to cancel");
+		CPrintToChat(iClient, "{lightseagreen}[Report] {grey}Please type a reason or \"cancel\" to cancel");
 	}
 }
 
@@ -118,7 +118,7 @@ public Action OnClientSayCommand(int iClient, const char[] sCommand, const char[
 			return Plugin_Continue;
 		}
 		
-		if (!StrEqual(sArgs, "nvm", false))
+		if (!StrEqual(sArgs, "cancel", false))
 			SendReport(iClient, iCache[iClient], sArgs);
 		else
 			CPrintToChat(iClient, "{lightseagreen}[Report] {grey}Report cancelled");

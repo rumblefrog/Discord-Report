@@ -1,7 +1,7 @@
 #pragma semicolon 1
 
 #define PLUGIN_AUTHOR "Fishy"
-#define PLUGIN_VERSION "1.0.0"
+#define PLUGIN_VERSION "1.0.1"
 
 #include <sourcemod>
 #include <smjansson>
@@ -255,7 +255,7 @@ stock void AddCoolDown(int iClient)
 	if (OnCoolDown(iClient))
 		return;
 		
-	fReportNextUse[iClient] += 120.0;
+	fReportNextUse[iClient] = GetGameTime() + 120.0;
 }
 
 stock float GetRemaining(int iClient)

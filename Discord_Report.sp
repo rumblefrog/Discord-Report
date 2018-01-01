@@ -1,7 +1,7 @@
 #pragma semicolon 1
 
 #define PLUGIN_AUTHOR "Fishy"
-#define PLUGIN_VERSION "1.0.2"
+#define PLUGIN_VERSION "1.1.0"
 
 #include <sourcemod>
 #include <smjansson>
@@ -18,7 +18,7 @@ int iCache[MAXPLAYERS + 1];
 
 bool bInReason[MAXPLAYERS + 1];
 
-char sHook[512];
+char sHook[512], sHostname[64], sHost[64];
 
 public Plugin myinfo = 
 {
@@ -34,6 +34,11 @@ public void OnPluginStart()
 	CreateConVar("sm_discord_report_version", PLUGIN_VERSION, "Discord Report Version", FCVAR_REPLICATED | FCVAR_SPONLY | FCVAR_DONTRECORD | FCVAR_NOTIFY);
 	
 	cHook = CreateConVar("sm_discord_report_hook", "", "Discord Hook URL", FCVAR_PROTECTED);
+	
+	FindConVar("hostname").GetString(sHostname, sizeof sHostname);
+	
+	int iIPB = FindConVar("hostip").IntValue;
+	Format(sHost, sizeof sHost, "%d.%d.%d.%d:%d", iIPB >> 24 & 0x000000FF, iIPB >> 16 & 0x000000FF, iIPB >> 8 & 0x000000FF, iIPB & 0x000000FF, FindConVar("hostport").IntValue);
 	
 	RegConsoleCmd("sm_report", CmdReport, "Report to admin");
 	
@@ -179,12 +184,19 @@ void SendReport(int iClient, int iTarget, const char[] sReason)
 	json_object_set_new(jFieldTarget, "value", json_string(sBuffer));
 	json_object_set_new(jFieldTarget, "inline", json_boolean(true));
 	
+	Handle jFieldServer = json_object();
+	json_object_set_new(jFieldServer, "name", json_string("Server"));
+	Format(sBuffer, sizeof sBuffer, "%s (%s)", sHostname, sHost);
+	json_object_set_new(jFieldServer, "value", json_string(sBuffer));
+	json_object_set_new(jFieldServer, "inline", json_boolean(true));
+	
 	Handle jFieldReason = json_object();
 	json_object_set_new(jFieldReason, "name", json_string("Reason"));
 	json_object_set_new(jFieldReason, "value", json_string(sReason));
 	
 	json_array_append_new(jFields, jFieldAuthor);
 	json_array_append_new(jFields, jFieldTarget);
+	json_array_append_new(jFields, jFieldServer);
 	json_array_append_new(jFields, jFieldReason);
 	
 	

@@ -1,7 +1,7 @@
 #pragma semicolon 1
 
 #define PLUGIN_AUTHOR "Fishy"
-#define PLUGIN_VERSION "1.1.0"
+#define PLUGIN_VERSION "1.2.0"
 
 #include <sourcemod>
 #include <smjansson>
@@ -75,9 +75,11 @@ public Action CmdReport(int iClient, int iArgs)
 	}
 		
 	Menu mReport = new Menu(Report_Handler);
-	mReport.SetTitle("Report Player");
+	mReport.SetTitle("Report");
 	
 	char sBuffer[MAX_NAME_LENGTH + 8], sIndex[8];
+	
+	mReport.AddItem("ns", "Non-Player Specific");
 	
 	for (int i = 0; i <= MaxClients; i++)
 	{
@@ -100,14 +102,17 @@ public int Report_Handler(Menu menu, MenuAction action, int iClient, int iItem)
 	if (action == MenuAction_Cancel)
 		delete menu;
 	else if (action == MenuAction_Select)
-	{
-		char sIndex[8];
-		
-		menu.GetItem(iItem, sIndex, sizeof sIndex);
-		int iTarget = StringToInt(sIndex);
-		
+	{	
+		if (iItem != 0)
+		{
+			char sIndex[8];
+			menu.GetItem(iItem, sIndex, sizeof sIndex);
+			iCache[iClient] = StringToInt(sIndex);
+		}
+		else
+			iCache[iClient] = -1;
+			
 		bInReason[iClient] = true;
-		iCache[iClient] = iTarget;
 		
 		CPrintToChat(iClient, "{lightseagreen}[Report] {grey}Please type a reason or \"cancel\" to cancel");
 	}
@@ -138,16 +143,23 @@ public Action OnClientSayCommand(int iClient, const char[] sCommand, const char[
 
 void SendReport(int iClient, int iTarget, const char[] sReason)
 {
-	if (!IsValidClient(iClient) || !IsValidClient(iTarget))
+	if (!IsValidClient(iClient))
+		return;
+		
+	if (iTarget != -1 && !IsValidClient(iTarget))
 		return;
 		
 	char sAuthor[MAX_NAME_LENGTH], sTarget[MAX_NAME_LENGTH], sAuthorID[32], sTargetID[32], sTargetID64[32], sJson[2048], sBuffer[256];
 	
 	GetClientName(iClient, sAuthor, sizeof sAuthor);
-	GetClientName(iTarget, sTarget, sizeof sTarget);
 	GetClientAuthId(iClient, AuthId_Steam2, sAuthorID, sizeof sAuthorID);
-	GetClientAuthId(iTarget, AuthId_Steam2, sTargetID, sizeof sTargetID);
-	GetClientAuthId(iTarget, AuthId_SteamID64, sTargetID64, sizeof sTargetID64);
+	
+	if (iTarget != -1)
+	{
+		GetClientName(iTarget, sTarget, sizeof sTarget);
+		GetClientAuthId(iTarget, AuthId_Steam2, sTargetID, sizeof sTargetID);
+		GetClientAuthId(iTarget, AuthId_SteamID64, sTargetID64, sizeof sTargetID64);
+	}
 		
 	AddCoolDown(iClient);
 	
@@ -178,11 +190,16 @@ void SendReport(int iClient, int iTarget, const char[] sReason)
 	json_object_set_new(jFieldAuthor, "value", json_string(sBuffer));
 	json_object_set_new(jFieldAuthor, "inline", json_boolean(true));
 	
-	Handle jFieldTarget = json_object();
-	json_object_set_new(jFieldTarget, "name", json_string("Target"));
-	Format(sBuffer, sizeof sBuffer, "%s (%s)", sTarget, sTargetID);
-	json_object_set_new(jFieldTarget, "value", json_string(sBuffer));
-	json_object_set_new(jFieldTarget, "inline", json_boolean(true));
+	if (iTarget != -1)
+	{
+		Handle jFieldTarget = json_object();
+		json_object_set_new(jFieldTarget, "name", json_string("Target"));
+		Format(sBuffer, sizeof sBuffer, "%s (%s)", sTarget, sTargetID);
+		json_object_set_new(jFieldTarget, "value", json_string(sBuffer));
+		json_object_set_new(jFieldTarget, "inline", json_boolean(true));
+		
+		json_array_append_new(jFields, jFieldTarget);
+	}
 	
 	Handle jFieldServer = json_object();
 	json_object_set_new(jFieldServer, "name", json_string("Server"));
@@ -195,7 +212,6 @@ void SendReport(int iClient, int iTarget, const char[] sReason)
 	json_object_set_new(jFieldReason, "value", json_string(sReason));
 	
 	json_array_append_new(jFields, jFieldAuthor);
-	json_array_append_new(jFields, jFieldTarget);
 	json_array_append_new(jFields, jFieldServer);
 	json_array_append_new(jFields, jFieldReason);
 	

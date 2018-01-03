@@ -1,7 +1,7 @@
 #pragma semicolon 1
 
 #define PLUGIN_AUTHOR "Fishy"
-#define PLUGIN_VERSION "1.2.0"
+#define PLUGIN_VERSION "1.2.1"
 
 #include <sourcemod>
 #include <smjansson>
@@ -153,13 +153,6 @@ void SendReport(int iClient, int iTarget, const char[] sReason)
 	
 	GetClientName(iClient, sAuthor, sizeof sAuthor);
 	GetClientAuthId(iClient, AuthId_Steam2, sAuthorID, sizeof sAuthorID);
-	
-	if (iTarget != -1)
-	{
-		GetClientName(iTarget, sTarget, sizeof sTarget);
-		GetClientAuthId(iTarget, AuthId_Steam2, sTargetID, sizeof sTargetID);
-		GetClientAuthId(iTarget, AuthId_SteamID64, sTargetID64, sizeof sTargetID64);
-	}
 		
 	AddCoolDown(iClient);
 	
@@ -192,6 +185,10 @@ void SendReport(int iClient, int iTarget, const char[] sReason)
 	
 	if (iTarget != -1)
 	{
+		GetClientName(iTarget, sTarget, sizeof sTarget);
+		GetClientAuthId(iTarget, AuthId_Steam2, sTargetID, sizeof sTargetID);
+		GetClientAuthId(iTarget, AuthId_SteamID64, sTargetID64, sizeof sTargetID64);
+		
 		Handle jFieldTarget = json_object();
 		json_object_set_new(jFieldTarget, "name", json_string("Target"));
 		Format(sBuffer, sizeof sBuffer, "%s (%s)", sTarget, sTargetID);

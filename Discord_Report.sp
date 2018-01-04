@@ -1,7 +1,7 @@
 #pragma semicolon 1
 
 #define PLUGIN_AUTHOR "Fishy"
-#define PLUGIN_VERSION "1.2.3"
+#define PLUGIN_VERSION "1.3.4"
 
 #include <sourcemod>
 #include <smjansson>
@@ -114,25 +114,38 @@ public int Report_Handler(Menu menu, MenuAction action, int iClient, int iItem)
 			
 		bInReason[iClient] = true;
 		
-		CPrintToChat(iClient, "{lightseagreen}[Report] {grey}Please type a reason or \"cancel\" to cancel");
+		CPrintToChat(iClient, "{lightseagreen}[Report] {grey}Please type the detail for the report or \"cancel\" to cancel");
 	}
 }
 
 public Action OnClientSayCommand(int iClient, const char[] sCommand, const char[] sArgs)
 {
 	if (bInReason[iClient])
-	{	
+	{
 		if (!IsValidClient(iClient) || (iCache[iClient] != -1 && !IsValidClient(iCache[iClient])))
 		{
 			ResetInReason(iClient);
+			
 			return Plugin_Continue;
 		}
 		
-		if (!StrEqual(sArgs, "cancel", false))
-			SendReport(iClient, iCache[iClient], sArgs);
-		else
+		if (StrEqual(sArgs, "cancel", false))
+		{
 			CPrintToChat(iClient, "{lightseagreen}[Report] {grey}Report cancelled");
+			ResetInReason(iClient);
 			
+			return Plugin_Stop;
+		}
+		
+		if (strlen(sArgs) < 15)
+		{
+			CPrintToChat(iClient, "{lightseagreen}[Report] {grey}Detail too vague; Report cancelled"); 
+			ResetInReason(iClient);
+			
+			return Plugin_Stop;
+		}
+		
+		SendReport(iClient, iCache[iClient], sArgs);
 		ResetInReason(iClient);
 			
 		return Plugin_Stop;

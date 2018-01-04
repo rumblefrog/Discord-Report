@@ -1,7 +1,7 @@
 #pragma semicolon 1
 
 #define PLUGIN_AUTHOR "Fishy"
-#define PLUGIN_VERSION "1.2.2"
+#define PLUGIN_VERSION "1.2.3"
 
 #include <sourcemod>
 #include <smjansson>
@@ -149,10 +149,11 @@ void SendReport(int iClient, int iTarget, const char[] sReason)
 	if (iTarget != -1 && !IsValidClient(iTarget))
 		return;
 		
-	char sAuthor[MAX_NAME_LENGTH], sTarget[MAX_NAME_LENGTH], sAuthorID[32], sTargetID[32], sTargetID64[32], sJson[2048], sBuffer[256];
+	char sAuthor[MAX_NAME_LENGTH], sTarget[MAX_NAME_LENGTH], sAuthorID[32], sAuthorID64[32], sTargetID[32], sJson[2048], sBuffer[256];
 	
 	GetClientName(iClient, sAuthor, sizeof sAuthor);
 	GetClientAuthId(iClient, AuthId_Steam2, sAuthorID, sizeof sAuthorID);
+	GetClientAuthId(iTarget, AuthId_SteamID64, sAuthorID64, sizeof sAuthorID64);
 		
 	AddCoolDown(iClient);
 	
@@ -169,7 +170,7 @@ void SendReport(int iClient, int iTarget, const char[] sReason)
 	Handle jContentAuthor = json_object();
 	
 	json_object_set_new(jContentAuthor, "name", json_string(sAuthor));
-	Format(sBuffer, sizeof sBuffer, "https://steamcommunity.com/profiles/%s", sTargetID64);
+	Format(sBuffer, sizeof sBuffer, "https://steamcommunity.com/profiles/%s", sAuthorID64);
 	json_object_set_new(jContentAuthor, "url", json_string(sBuffer));
 	json_object_set_new(jContent, "author", jContentAuthor);
 	
@@ -187,7 +188,6 @@ void SendReport(int iClient, int iTarget, const char[] sReason)
 	{
 		GetClientName(iTarget, sTarget, sizeof sTarget);
 		GetClientAuthId(iTarget, AuthId_Steam2, sTargetID, sizeof sTargetID);
-		GetClientAuthId(iTarget, AuthId_SteamID64, sTargetID64, sizeof sTargetID64);
 		
 		Handle jFieldTarget = json_object();
 		json_object_set_new(jFieldTarget, "name", json_string("Target"));

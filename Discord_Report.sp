@@ -1,7 +1,7 @@
 #pragma semicolon 1
 
 #define PLUGIN_AUTHOR "Fishy"
-#define PLUGIN_VERSION "1.2.1"
+#define PLUGIN_VERSION "1.2.2"
 
 #include <sourcemod>
 #include <smjansson>
@@ -122,7 +122,7 @@ public Action OnClientSayCommand(int iClient, const char[] sCommand, const char[
 {
 	if (bInReason[iClient])
 	{	
-		if (!IsValidClient(iClient) || !IsValidClient(iCache[iClient]))
+		if (!IsValidClient(iClient) || (iCache[iClient] != -1 && !IsValidClient(iCache[iClient])))
 		{
 			ResetInReason(iClient);
 			return Plugin_Continue;

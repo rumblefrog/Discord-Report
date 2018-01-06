@@ -1,7 +1,7 @@
 #pragma semicolon 1
 
 #define PLUGIN_AUTHOR "Fishy"
-#define PLUGIN_VERSION "1.3.4"
+#define PLUGIN_VERSION "1.3.5"
 
 #include <sourcemod>
 #include <smjansson>
@@ -84,6 +84,9 @@ public Action CmdReport(int iClient, int iArgs)
 	for (int i = 0; i <= MaxClients; i++)
 	{
 		if (!IsValidClient(i))
+			continue;
+			
+		if (i == iClient)
 			continue;
 			
 		Format(sBuffer, sizeof sBuffer, "%N", i);
